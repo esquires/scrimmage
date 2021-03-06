@@ -166,16 +166,16 @@ bool Viewer::run() {
         boost::to_upper_copy(get<std::string>("mode", camera_params_, "follow"));
 
     if (view_mode == "FOLLOW") {
-        updater->set_view_mode(Updater::ViewMode::FOLLOW);
+        updater->set_view_mode(ViewMode::FOLLOW);
     } else if (view_mode == "FREE") {
-        updater->set_view_mode(Updater::ViewMode::FREE);
+        updater->set_view_mode(ViewMode::FREE);
         updater->set_reset_camera();
     } else if (view_mode == "OFFSET") {
-        updater->set_view_mode(Updater::ViewMode::OFFSET);
+        updater->set_view_mode(ViewMode::OFFSET);
     } else {
         std::cout << "Unrecognized attribute \"" << view_mode
             << "\" for camera_view_mode" << std::endl;
-        updater->set_view_mode(Updater::ViewMode::FOLLOW);
+        updater->set_view_mode(ViewMode::FOLLOW);
     }
 
     updater->init(log_dir_, dt_);

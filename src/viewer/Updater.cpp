@@ -132,7 +132,8 @@ void Updater::set_quat(const scrimmage::Quaternion &quat,
 Updater::Updater() :
         frame_time_(-1.0), update_count(0), inc_follow_(true),
         dec_follow_(false), view_mode_(ViewMode::FOLLOW), view_mode_prev_(ViewMode::FREE),
-        follow_offset_(50), follow_vec_(-50, 10, 10), show_helpmenu_(false) {
+        follow_offset_(50), follow_vec_(-50, 0, 10), show_helpmenu_(false) {
+
     prev_time.tv_nsec = 0;
     prev_time.tv_sec = 0;
     max_update_rate_ = 1.0;
@@ -344,6 +345,9 @@ bool Updater::update_scale() {
         auto it = contact_visuals_.find(kv.first);
         if (it != contact_visuals_.end()) {
             desired_scale_amount = it->second->scale() * scale_;
+            if (kv.first == 0) {
+                std::cout << "desired scale amount: " << desired_scale_amount << std::endl;
+            }
         }
 
         // Get the 4x4 matrix that defines the scale, rotation, and translation
@@ -542,8 +546,46 @@ void Updater::set_view_mode(ViewMode view_mode) {
 
 bool Updater::update_camera() {
     // Free mode if contacts don't exist
+
+    double cp[3];
+    renderer_->GetActiveCamera()->GetPosition(cp);
+    double cf[3];
+    renderer_->GetActiveCamera()->GetFocalPoint(cf);
+    auto script = scripted_camera_.step(
+        frame_time_, follow_offset_,
+        {cp[0], cp[1], cp[2]},
+        {cf[0], cf[1], cf[2]});
+    if (script.do_view_update) {
+
+        set_view_mode(script.mode);
+        view_mode_prev_ = script.mode;
+        reset_camera_ = false;
+
+        if (script.mode == ViewMode::FREE) {
+            renderer_->GetActiveCamera()->SetPosition(script.camera_pos.data());
+            renderer_->GetActiveCamera()->SetFocalPoint(
+                script.camera_focal_point[0], script.camera_focal_point[1],
+                script.camera_focal_point[2]);
+            renderer_->ResetCameraClippingRange(); // fixes missing terrain/entity issue
+        }
+    }
+    if (script.toggle_pause) {
+        toggle_pause();
+    }
+
+    if (script.inc_warp) {
+        inc_warp();
+    } else if (script.dec_warp) {
+        dec_warp();
+    }
+
+    if (!std::isnan(script.veh_scale)) {
+        scale_ = script.veh_scale;
+        update_scale();
+    }
+
     if (actor_contacts_.empty()) {
-        set_view_mode(ViewMode::FREE);
+        // set_view_mode(ViewMode::FREE);
         return true;
     }
 
@@ -553,6 +595,12 @@ bool Updater::update_camera() {
     } else if (dec_follow_) {
         follow_id_--;
     }
+    double currentPos[3];
+    renderer_->GetActiveCamera()->GetPosition(currentPos);
+    double currentFp[3];
+    renderer_->GetActiveCamera()->GetFocalPoint(currentFp);
+    // std::cout << "currentPos: " << currentPos[0] << ", " << currentPos[1] << ", " << currentPos[2] << std::endl;
+    // std::cout << "currentFp: " << currentFp[0] << ", " << currentFp[1] << ", " << currentFp[2] << std::endl;
 
     // Find min/max ids
     // this is a map so the front will be the min and the back is the max
@@ -620,6 +668,11 @@ bool Updater::update_camera() {
                     follow_vec_[i] = currentPos[i]-currentFp[i];
                 follow_offset_ = follow_vec_.norm();
             }
+            if (!std::isnan(script.follow_offset)) {
+                follow_offset_ = script.follow_offset;
+            }
+
+            // std::cout << "follow offset is " << follow_offset_ << std::endl;
 
             Eigen::Vector3d rel_cam_pos = follow_vec_.normalized() * follow_offset_;
             Eigen::Vector3d unit_vector = rel_cam_pos / rel_cam_pos.norm();
@@ -689,11 +742,13 @@ bool Updater::update_text_display() {
     std::stringstream ss;
     ss << std::setprecision(num_digits) << std::fixed << frame_time_ << " s";
     time_actor_->SetInput(ss.str().c_str());
+    // time_actor_->SetInput("0.01");
 
     // Update the time warp
     std::stringstream stream_warp;
     stream_warp << std::fixed << std::setprecision(2) << sim_info_.desired_warp();
     std::string time_warp_str = stream_warp.str() + " X";
+    // warp_actor_->SetInput("3.00 X");
     warp_actor_->SetInput(time_warp_str.c_str());
 
     // Display information about the aircraft we are following:
@@ -724,12 +779,6 @@ void Updater::next_mode() {
             set_view_mode(ViewMode::FREE);
             break;
         case ViewMode::FREE:
-            set_view_mode(ViewMode::OFFSET);
-            break;
-        case ViewMode::OFFSET:
-            set_view_mode(ViewMode::FPV);
-            break;
-        case ViewMode::FPV:
             set_view_mode(ViewMode::FOLLOW);
             break;
         default:

@@ -39,6 +39,7 @@
 #include <vtkRenderWindowInteractor.h>
 
 #include <scrimmage/viewer/CameraInterface.h>
+#include <scrimmage/viewer/ScriptedCamera.h>
 
 #include <map>
 #include <string>

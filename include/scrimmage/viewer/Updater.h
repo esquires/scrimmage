@@ -34,6 +34,7 @@
 #define INCLUDE_SCRIMMAGE_VIEWER_UPDATER_H_
 
 #include <scrimmage/math/Quaternion.h>
+#include <scrimmage/viewer/ScriptedCamera.h>
 #include <scrimmage/proto/Shape.pb.h>
 #include <scrimmage/proto/Contact.pb.h>
 #include <scrimmage/proto/Frame.pb.h>
@@ -95,8 +96,6 @@ class Updater : public vtkCommand {
  public:
     // codechecker_intentional [cplusplus.NewDeleteLeaks]
     vtkTypeMacro(Updater, vtkCommand);
-
-    enum class ViewMode {FOLLOW = 0, FREE, OFFSET, FPV};
 
     static Updater *New() {
         return new Updater;
@@ -351,8 +350,10 @@ class Updater : public vtkCommand {
     double dt_ = 0.1;
 
     bool show_helpmenu_;
-    double label_scale_ = 0.3;
+    double label_scale_ = 0.00001;
     double init_scale_ = 1.0;
+
+    ScriptedCamera scripted_camera_;
 };
 
 } // namespace scrimmage

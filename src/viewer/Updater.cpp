@@ -179,9 +179,17 @@ void Updater::Execute(vtkObject *caller, unsigned long vtkNotUsed(eventId), // N
 
     incoming_interface_->gui_msg_mutex.lock();
     auto &gui_msg_list = incoming_interface_->gui_msg();
-    if (!gui_msg_list.empty()) {
+    while (!gui_msg_list.empty()) {
+
         auto &msg = gui_msg_list.front();
-        if (std::abs(msg.time() - frame_time_) < 1e-7 && fs::exists(log_dir_)) {
+        bool time_near = std::abs(msg.time() - frame_time_) < 1e-7;
+
+        if (time_near and !fs::exists(log_dir_) and !log_dir_warning_) {
+            std::cout << "Updater cannot save screenshot because the log dir "
+                << log_dir_ << " does not exist" << std::endl;
+            log_dir_warning_ = true;
+        }
+        if (time_near && fs::exists(log_dir_)) {
 
             vtkSmartPointer<vtkWindowToImageFilter> windowToImageFilter =
                 vtkSmartPointer<vtkWindowToImageFilter>::New();
@@ -198,8 +206,12 @@ void Updater::Execute(vtkObject *caller, unsigned long vtkNotUsed(eventId), // N
                 writer->Write();
             }
             single_step();
-            gui_msg_list.pop_front();
+        } else if (msg.time() > frame_time_) {
+            // got a message that is in the future so exit
+            // since it will be relevant to a future frame
+            break;
         }
+        gui_msg_list.pop_front();
     }
     incoming_interface_->gui_msg_mutex.unlock();
 }

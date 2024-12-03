@@ -366,6 +366,7 @@ class Updater : public vtkCommand {
 
  public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+    int screenshot_num_ = 1;
 };
 
 }  // namespace scrimmage

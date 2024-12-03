@@ -198,8 +198,14 @@ void Updater::Execute(vtkObject *caller, unsigned long vtkNotUsed(eventId), // N
 
             vtkSmartPointer<vtkPNGWriter> writer = vtkSmartPointer<vtkPNGWriter>::New();
 
-            const std::string fname =
-                log_dir_ + "/screenshot_" + std::to_string(frame_time_) + ".png";
+            std::string fname = "";
+            int num_zeros = 6 - static_cast<int>(std::log10(screenshot_num_));
+            for (int i = 0; i < num_zeros; i++) {
+                fname += "0";
+            }
+            fname = log_dir_ + "/screenshot_" + fname + std::to_string(screenshot_num_) + ".png";
+            screenshot_num_++;
+            
             if (!fs::exists(fname)) {
                 writer->SetFileName(fname.c_str());
                 writer->SetInputConnection(windowToImageFilter->GetOutputPort());

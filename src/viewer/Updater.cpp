@@ -540,22 +540,23 @@ bool Updater::draw_shapes(scrimmage_proto::Shapes &shapes) {
 
 void Updater::set_view_mode(ViewMode view_mode) {
     view_mode_ = view_mode;
-    switch (view_mode_) {
-        case ViewMode::FOLLOW:
-            view_mode_actor_->SetInput("View: Follow");
-            break;
-        case ViewMode::FREE:
-            view_mode_actor_->SetInput("View: Free");
-            break;
-        case ViewMode::OFFSET:
-            view_mode_actor_->SetInput("View: Offset");
-            break;
-        case ViewMode::FPV:
-            view_mode_actor_->SetInput("View: FPV");
-            break;
-        default:
-            break;
-    }
+    view_mode_actor_->SetInput("");
+    // switch (view_mode_) {
+    //     case ViewMode::FOLLOW:
+    //         view_mode_actor_->SetInput("View: Follow");
+    //         break;
+    //     case ViewMode::FREE:
+    //         view_mode_actor_->SetInput("View: Free");
+    //         break;
+    //     case ViewMode::OFFSET:
+    //         view_mode_actor_->SetInput("View: Offset");
+    //         break;
+    //     case ViewMode::FPV:
+    //         view_mode_actor_->SetInput("View: FPV");
+    //         break;
+    //     default:
+    //         break;
+    // }
 }
 
 bool Updater::update_camera() {
@@ -697,7 +698,8 @@ bool Updater::update_text_display() {
         std::stringstream stream_fps;
         stream_fps << std::fixed << std::setprecision(2) << fps;
         std::string fps_str = "FPS: " + stream_fps.str();
-        fps_actor_->SetInput(fps_str.c_str());
+        // fps_actor_->SetInput(fps_str.c_str());
+        fps_actor_->SetInput("");
     } else {
         fps_actor_->SetInput(" ");
     }
@@ -712,7 +714,8 @@ bool Updater::update_text_display() {
     std::stringstream stream_warp;
     stream_warp << std::fixed << std::setprecision(2) << sim_info_.desired_warp();
     std::string time_warp_str = stream_warp.str() + " X";
-    warp_actor_->SetInput(time_warp_str.c_str());
+    // warp_actor_->SetInput(time_warp_str.c_str());
+    warp_actor_->SetInput("");
 
     // Display information about the aircraft we are following:
     if (view_mode_ == ViewMode::FREE) {
@@ -725,10 +728,12 @@ bool Updater::update_text_display() {
             sp::Quaternion sp_quat = it->second->contact.state().orientation();
             sc::Quaternion quat(sp_quat.w(), sp_quat.x(), sp_quat.y(), sp_quat.z());
             std::string heading_str = "H: " + std::to_string(sc::Angles::rad2deg(quat.yaw()));
-            heading_actor_->SetInput(heading_str.c_str());
+            // heading_actor_->SetInput(heading_str.c_str());
+            heading_actor_->SetInput("");
 
             std::string alt_str = "Alt: " + std::to_string(it->second->contact.state().position().z());
-            alt_actor_->SetInput(alt_str.c_str());
+            // alt_actor_->SetInput(alt_str.c_str());
+            alt_actor_->SetInput("");
         }
     }
 
@@ -1115,7 +1120,8 @@ bool Updater::update_contacts(std::shared_ptr<scrimmage_proto::Frame> &frame) {
             // Add the object label
             vtkSmartPointer<vtkVectorText> textSource =
                 vtkSmartPointer<vtkVectorText>::New();
-            textSource->SetText(std::to_string(id).c_str());
+            // textSource->SetText(std::to_string(id).c_str());
+            textSource->SetText("");
 
             // Create a mapper for the label
             vtkSmartPointer<vtkPolyDataMapper> label_mapper =
